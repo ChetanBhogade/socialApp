@@ -15,7 +15,8 @@ import {
 import storage from '@react-native-firebase/storage';
 import ProgressBar from 'react-native-progress/Bar';
 
-import ImagePicker from 'react-native-image-picker';
+// import ImagePicker from 'react-native-image-picker';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 import {options} from '../utils/Options';
 
@@ -37,27 +38,38 @@ const SignUp = ({signUp}) => {
   const [uploadStatus, setUploadStatus] = useState(null);
 
   const chooseImage = async () => {
-    ImagePicker.launchCamera(options, response => {
-      console.log('Image Picker response: - ', response);
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorCode) {
-        console.log('Image Picker Image: - ', response.errorCode);
-      } else if (response.errorMessage) {
-        console.log('User errorMessage: - ', response.errorMessage);
-      } else {
-        const source = {uri: response.assets};
-        console.log('Image Source: - ', source, ' all response: - ', response);
-        uploadImage(response);
-      }
-    });
+    launchCamera(
+      {
+        mediaType: 'photo',
+      },
+      response => {
+        console.log('Image Picker response: - ', response);
+        if (response.didCancel) {
+          console.log('User cancelled image picker');
+        } else if (response.errorCode) {
+          console.log('Image Picker Image: - ', response.errorCode);
+        } else if (response.errorMessage) {
+          console.log('User errorMessage: - ', response.errorMessage);
+        } else {
+          const source = response.assets;
+          console.log(
+            'Image Source: - ',
+            source,
+            ' all response: - ',
+            response,
+          );
+          uploadImage(source[0]);
+        }
+      },
+    );
   };
 
   const uploadImage = async response => {
     setImageUploading(true);
-    const reference = storage().ref(response.filename);
+    console.log('Incoming response: - ', response);
+    const reference = storage().ref(response.fileName);
 
-    const task = reference.putFile(response.path);
+    const task = reference.putFile(response.uri);
     task.on('state_changed', taskSnapshot => {
       const percentage =
         (taskSnapshot.bytesTransferred / taskSnapshot.totalBytes) * 1000;
